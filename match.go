@@ -23,3 +23,68 @@ const (
 	WordTypeProfanity     WordType = 20
 	WordTypeFalsePositive WordType = 30
 )
+
+type Matches []*Match
+
+func (ms Matches) HasProfaneMatch() bool {
+	for _, m := range ms {
+		if m.IsProfane() {
+			return true
+		}
+	}
+	return false
+}
+
+func (ms Matches) GetProfaneMatches() (resp Matches) {
+	for _, m := range ms {
+		if m.IsProfane() {
+			resp = append(resp, m)
+		}
+	}
+	return resp
+}
+
+func (ms Matches) GetFirstProfaneMatch() *Match {
+	for _, m := range ms {
+		if m.IsProfane() {
+			return m
+		}
+	}
+	return nil
+}
+
+func (ms Matches) HasSuspectMatch() bool {
+	for _, m := range ms {
+		if m.IsSuspect() {
+			return true
+		}
+	}
+	return false
+}
+
+func (ms Matches) GetSuspectMatches() (resp Matches) {
+	for _, m := range ms {
+		if m.IsSuspect() {
+			resp = append(resp, m)
+		}
+	}
+	return resp
+}
+
+func (ms Matches) HasFalsePositiveMatch() bool {
+	for _, m := range ms {
+		if m.IsFalsePositive() {
+			return true
+		}
+	}
+	return false
+}
+
+func (ms Matches) GetFalsePositiveMatches() (resp Matches) {
+	for _, m := range ms {
+		if m.IsFalsePositive() {
+			resp = append(resp, m)
+		}
+	}
+	return resp
+}

@@ -24,3 +24,18 @@ func Test_Match(t *testing.T) {
 	assert.Equal(t, true, s.IsFalsePositive())
 	assert.Equal(t, false, s.IsSuspect())
 }
+
+func Test_Matches(t *testing.T) {
+	s := Matches{&Match{Word: "bass", WordType: WordTypeFalsePositive},
+		&Match{Word: "ass", WordType: WordTypeProfanity}}
+
+	assert.Equal(t, true, s.HasProfaneMatch())
+	assert.Equal(t, "ass", s.GetFirstProfaneMatch().Word)
+	assert.Equal(t, 1, len(s.GetProfaneMatches()))
+
+	assert.Equal(t, false, s.HasSuspectMatch())
+	assert.Equal(t, 0, len(s.GetSuspectMatches()))
+
+	assert.Equal(t, true, s.HasFalsePositiveMatch())
+	assert.Equal(t, 1, len(s.GetFalsePositiveMatches()))
+}

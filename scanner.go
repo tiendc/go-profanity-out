@@ -16,7 +16,7 @@ type scanner struct {
 	inputLen  int
 }
 
-func (s *scanner) scanAll(input string) (matches []*Match) {
+func (s *scanner) scanAll(input string) (matches Matches) {
 	// Sanitizes accents if configured
 	if s.settings.SanitizeAccents {
 		s.inputOrig = []rune(input)

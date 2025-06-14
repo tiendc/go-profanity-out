@@ -16,7 +16,7 @@ func NewProfanityDetector() *ProfanityDetector {
 			SanitizeSpaces:             true,
 			SanitizeRepeatedCharacters: true,
 			SanitizeWildcardCharacters: false,
-			SanitizeAccents:            false,
+			SanitizeAccents:            true,
 			MatchWholeWord:             false,
 			ConfidenceCalculator:       confidenceCalculator,
 			CensorCharacter:            '*',
@@ -151,16 +151,11 @@ func (d *ProfanityDetector) WithCensorCharacter(censorCharacter rune) *Profanity
 
 // IsProfane checks a string containing profanity or not
 func (d *ProfanityDetector) IsProfane(s string, options ...DetectorOption) bool {
-	for _, match := range d.ScanProfanity(s, options...) {
-		if match.WordType == WordTypeProfanity {
-			return true
-		}
-	}
-	return false
+	return d.ScanProfanity(s, options...).HasProfaneMatch()
 }
 
 // ScanProfanity scans for the first profanity
-func (d *ProfanityDetector) ScanProfanity(s string, options ...DetectorOption) []*Match {
+func (d *ProfanityDetector) ScanProfanity(s string, options ...DetectorOption) Matches {
 	options = append(options, func(settings *DetectorSettings) {
 		settings.findAllProfanityMatches = false
 	})
@@ -168,12 +163,12 @@ func (d *ProfanityDetector) ScanProfanity(s string, options ...DetectorOption) [
 }
 
 // ScanAllProfanities scans for all profanities
-func (d *ProfanityDetector) ScanAllProfanities(s string, options ...DetectorOption) (matches []*Match) {
+func (d *ProfanityDetector) ScanAllProfanities(s string, options ...DetectorOption) (matches Matches) {
 	return d.newScanner(options...).scanAll(s)
 }
 
 // Censor scans for all profanities and censors all of them if found
-func (d *ProfanityDetector) Censor(s string, options ...DetectorOption) (string, []*Match) {
+func (d *ProfanityDetector) Censor(s string, options ...DetectorOption) (string, Matches) {
 	scanner := d.newScanner(options...)
 	matches := scanner.scanAll(s)
 	if len(matches) == 0 {
@@ -181,10 +176,7 @@ func (d *ProfanityDetector) Censor(s string, options ...DetectorOption) (string,
 	}
 
 	content := scanner.inputOrig
-	for _, match := range matches {
-		if match.WordType != WordTypeProfanity {
-			continue
-		}
+	for _, match := range matches.GetProfaneMatches() {
 		for i := match.Start; i < match.End; i++ {
 			if content[i] != ' ' {
 				content[i] = scanner.settings.CensorCharacter

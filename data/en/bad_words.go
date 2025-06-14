@@ -10,6 +10,7 @@ var DefaultProfanities = []string{
 	"balls",
 	"bastard",
 	"bitch",
+	"bitcη", // ending `η` is not `n` in the ASCII list
 	"btch",
 	"biatch",
 	"blowjob",
@@ -69,10 +70,13 @@ var DefaultProfanities = []string{
 	"rape",
 	"rapist",
 	"retard",
+	"retarded",
 	"rimjob",
 	"scrotum",
 	"sex",
+	"sexy",
 	"shit",
+	"shiter",
 	"slut",
 	"spunk",
 	"stfu",
@@ -93,6 +97,8 @@ var DefaultFalsePositives = []string{
 	"analyze",
 	"analytic",
 	"badass",
+	"bass",
+	"bullshit",
 }
 
 var DefaultSuspects = []string{}

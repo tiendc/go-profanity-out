@@ -41,7 +41,7 @@ detector := profanityout.NewProfanityDetector().
     WithMatchWholeWord(true).                                      // default: true
     WithSanitizeRepeatedCharacters(true).                          // default: true
     WithSanitizeWildcardCharacters(false).                         // default: false
-    WithSanitizeAccents(false).                                    // default: false
+    WithSanitizeAccents(true).                                     // default: true
     WithProcessInputAsHTML(false).                                 // default: false
     WithConfidenceCalculator(calculator).                          // default: built-in
     WithCensorCharacter('*')                                       // default: *
