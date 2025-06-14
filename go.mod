@@ -1,12 +1,10 @@
 module github.com/tiendc/go-profanity-out
 
-go 1.23.0
-
-toolchain go1.24.2
+go 1.20
 
 require (
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/text v0.26.0
+	golang.org/x/text v0.22.0
 )
 
 require (
