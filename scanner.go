@@ -16,7 +16,7 @@ type scanner struct {
 	inputLen  int
 }
 
-func (s *scanner) scanAll(input string) (matches Matches) {
+func (s *scanner) scan(input string) (matches Matches) {
 	// Sanitizes accents if configured
 	if s.settings.SanitizeAccents {
 		s.inputOrig = []rune(input)
@@ -27,6 +27,7 @@ func (s *scanner) scanAll(input string) (matches Matches) {
 	}
 
 	s.inputLen = len(s.input)
+	match := Match{} // declares a match here to reduce the allocations
 	pos := 0
 	for pos < s.inputLen {
 		nextPos := s.skipWhitespaces(pos)
@@ -36,13 +37,14 @@ func (s *scanner) scanAll(input string) (matches Matches) {
 		hasLeadingSpace := pos == 0 || nextPos != pos
 		pos = nextPos
 
-		match := &Match{Start: pos, LeadingSpace: hasLeadingSpace, Settings: s.settings}
-		s.scanOne(pos, 0, s.tree.root, match)
+		match = Match{Start: pos, LeadingSpace: hasLeadingSpace, Settings: s.settings}
+		s.scanOne(pos, 0, s.tree.root, &match)
 		if match.WordType != 0 {
-			if !s.settings.ConfidenceCalculator(match) {
+			if !s.settings.ConfidenceCalculator(&match) {
 				goto ScanNextPos
 			}
-			matches = append(matches, match)
+			matchCopy := match
+			matches = append(matches, &matchCopy)
 			if match.WordType == WordTypeProfanity && !s.settings.findAllProfanityMatches {
 				return matches
 			}

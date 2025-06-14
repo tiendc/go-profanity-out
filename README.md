@@ -98,7 +98,16 @@ ScanProfanity("&lt;ock") // profane: false
 
 ## Benchmarks
 
-TBD
+[Benchmark code](https://gist.github.com/tiendc/bd5a0655ad07251f626402d819786d84)
+
+```
+tiendc/go-profanity-out
+tiendc/go-profanity-out-10         	   10000	    104278 ns/op	   43759 B/op	     300 allocs/op
+TwiN/go-away
+TwiN/go-away-10                    	    2745	    415685 ns/op	  444899 B/op	     498 allocs/op
+finnbear/moderation
+finnbear/moderation-10             	   15432	     77601 ns/op	    2496 B/op	      22 allocs/op
+```
 
 ## Help wanted
 

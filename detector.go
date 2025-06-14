@@ -156,21 +156,18 @@ func (d *ProfanityDetector) IsProfane(s string, options ...DetectorOption) bool 
 
 // ScanProfanity scans for the first profanity
 func (d *ProfanityDetector) ScanProfanity(s string, options ...DetectorOption) Matches {
-	options = append(options, func(settings *DetectorSettings) {
-		settings.findAllProfanityMatches = false
-	})
-	return d.ScanAllProfanities(s, options...)
+	return d.newScanner(false, options...).scan(s)
 }
 
 // ScanAllProfanities scans for all profanities
 func (d *ProfanityDetector) ScanAllProfanities(s string, options ...DetectorOption) (matches Matches) {
-	return d.newScanner(options...).scanAll(s)
+	return d.newScanner(true, options...).scan(s)
 }
 
 // Censor scans for all profanities and censors all of them if found
 func (d *ProfanityDetector) Censor(s string, options ...DetectorOption) (string, Matches) {
-	scanner := d.newScanner(options...)
-	matches := scanner.scanAll(s)
+	scanner := d.newScanner(true, options...)
+	matches := scanner.scan(s)
 	if len(matches) == 0 {
 		return s, nil
 	}
@@ -186,9 +183,9 @@ func (d *ProfanityDetector) Censor(s string, options ...DetectorOption) (string,
 	return string(content), matches
 }
 
-func (d *ProfanityDetector) newScanner(options ...DetectorOption) *scanner {
+func (d *ProfanityDetector) newScanner(findAllMatches bool, options ...DetectorOption) *scanner {
 	settings := d.settings
-	settings.findAllProfanityMatches = true
+	settings.findAllProfanityMatches = findAllMatches
 	for _, opt := range options {
 		opt(&settings)
 	}
