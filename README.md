@@ -60,9 +60,9 @@ ScanProfanity("$h!t") // profane: true
 // WithSanitizeLeetSpeak: false
 ScanProfanity("$h!t") // profane: false
 
-// WithSpecialCharacters: true
+// WithSanitizeSpecialCharacters: true
 ScanProfanity("sh_it") // profane: true
-// WithSpecialCharacters: false
+// WithSanitizeSpecialCharacters: false
 ScanProfanity("sh_it") // profane: false
 
 // WithSanitizeSpaces: true
@@ -81,8 +81,8 @@ ScanProfanity("f**k") // profane: true
 ScanProfanity("f**k") // profane: false
 // Suppose "f*ck" is in the profanity dictionary
 WithProfaneWords([]string{"f*ck"}).ScanProfanity("fxck") // profane: true
-// With this option you can turn on matching portion of a word for specific words
-// without turning on `WithMatchWholeWord(true)`.
+// NOTE: With this option you can turn on matching portion of a word for specific words
+// without turning off `WithMatchWholeWord(false)` by putting "*word*" in dictionary.
 
 // WithSanitizeAccents: true
 ScanProfanity("fúck") // profane: true
@@ -91,8 +91,10 @@ ScanProfanity("fúck") // profane: false
 
 // WithMatchWholeWord: true
 ScanProfanity("fuckyou") // profane: false
-// WithMatchWholeWord: false
+// WithMatchWholeWord: false (NOTE: this may reduce the accuracy significantly)
 ScanProfanity("fuckyou") // profane: true
+// NOTE: consider turning on WithSanitizeWildcardCharacters and putting "*word*" in dictionary
+// to scan for non-whole word matching for specific words.
 
 // WithProcessInputAsHTML: true
 ScanProfanity("&lt;ock") // profane: true
