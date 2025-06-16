@@ -108,12 +108,19 @@ func Test_Scan_One(t *testing.T) {
 	})
 
 	t.Run("Sanitize wildcard char tests", func(t *testing.T) {
+		// Wildcard in input
 		m = d().WithSanitizeWildcardCharacters(true).ScanProfanity("x sh**t")
 		assert.Equal(t, &Match{Word: "shit", Start: 2, End: 7, WordType: WordTypeProfanity,
 			Text: []rune("sh**t"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
 
 		m = d().WithSanitizeWildcardCharacters(false).ScanProfanity("x sh**t")
 		assert.Nil(t, m)
+
+		// Wildcard in profanity dictionary
+		m = d().WithProfaneWords([]string{"*blah*"}).WithSanitizeWildcardCharacters(true).
+			ScanProfanity("xbl@hx")
+		assert.Equal(t, &Match{Word: "*blah*", Start: 0, End: 6, WordType: WordTypeProfanity,
+			Text: []rune("xbl@hx"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
 	})
 
 	t.Run("Process input as HTML tests", func(t *testing.T) {
@@ -171,6 +178,10 @@ func Test_Scan_One(t *testing.T) {
 		m = d().ScanProfanity("fuck", WithConfidenceCalculator(calculator))
 		assert.Nil(t, m)
 	})
+}
+
+func Test_Scan_All(t *testing.T) {
+	// TODO: add tests for this
 }
 
 func Test_Censor(t *testing.T) {

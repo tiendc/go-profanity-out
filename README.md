@@ -79,6 +79,10 @@ ScanProfanity("fuuuuck") // profane: false
 ScanProfanity("f**k") // profane: true
 // WithSanitizeWildcardCharacters: false
 ScanProfanity("f**k") // profane: false
+// Suppose "f*ck" is in the profanity dictionary
+WithProfaneWords([]string{"f*ck"}).ScanProfanity("fxck") // profane: true
+// With this option you can turn on matching portion of a word for specific words
+// without turning on `WithMatchWholeWord(true)`.
 
 // WithSanitizeAccents: true
 ScanProfanity("fúck") // profane: true

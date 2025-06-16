@@ -133,6 +133,13 @@ func (s *scanner) scanOne(pos int, prevCh rune, currentNode *node, match *Match)
 				continue
 			}
 
+			if s.settings.SanitizeWildcardCharacters {
+				nextNode = currentNode.Next('*')
+				if nextNode != nil {
+					goto HandleNodeFound
+				}
+			}
+
 			break
 		}
 
