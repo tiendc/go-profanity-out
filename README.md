@@ -38,9 +38,8 @@ detector := profanityout.NewProfanityDetector().
     WithSanitizeLeetSpeak(true).                                   // default: true
     WithSanitizeSpecialCharacters(true).                           // default: true
     WithSanitizeSpaces(true).                                      // default: true
-    WithMatchWholeWord(true).                                      // default: true
     WithSanitizeRepeatedCharacters(true).                          // default: true
-    WithSanitizeWildcardCharacters(false).                         // default: false
+    WithSanitizeWildcardCharacters(true).                          // default: true
     WithSanitizeAccents(true).                                     // default: true
     WithProcessInputAsHTML(false).                                 // default: false
     WithConfidenceCalculator(calculator).                          // default: built-in
@@ -76,25 +75,19 @@ ScanProfanity("fuuuuck") // profane: true
 ScanProfanity("fuuuuck") // profane: false
 
 // WithSanitizeWildcardCharacters: true
+// NOTE: wildcard characters can be in both input and/or profanity dictionary
 ScanProfanity("f**k") // profane: true
+WithProfaneWords([]string{"f*ck"}).ScanProfanity("fxck") // profane: true
+WithProfaneWords([]string{"*fuck*"}).ScanProfanity("xfuckx") // profane: true
 // WithSanitizeWildcardCharacters: false
 ScanProfanity("f**k") // profane: false
-// Suppose "f*ck" is in the profanity dictionary
-WithProfaneWords([]string{"f*ck"}).ScanProfanity("fxck") // profane: true
-// NOTE: With this option you can turn on matching portion of a word for specific words
-// without turning off `WithMatchWholeWord(false)` by putting "*word*" in dictionary.
+ScanProfanity("fxck") // profane: false
+ScanProfanity("xfuckx") // profane: false
 
 // WithSanitizeAccents: true
 ScanProfanity("fúck") // profane: true
 // WithSanitizeAccents: false
 ScanProfanity("fúck") // profane: false
-
-// WithMatchWholeWord: true
-ScanProfanity("fuckyou") // profane: false
-// WithMatchWholeWord: false (NOTE: this may reduce the accuracy significantly)
-ScanProfanity("fuckyou") // profane: true
-// NOTE: consider turning on WithSanitizeWildcardCharacters and putting "*word*" in dictionary
-// to scan for non-whole word matching for specific words.
 
 // WithProcessInputAsHTML: true
 ScanProfanity("&lt;ock") // profane: true

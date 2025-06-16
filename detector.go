@@ -15,9 +15,8 @@ func NewProfanityDetector() *ProfanityDetector {
 			SanitizeLeetSpeak:          true,
 			SanitizeSpaces:             true,
 			SanitizeRepeatedCharacters: true,
-			SanitizeWildcardCharacters: false,
+			SanitizeWildcardCharacters: true,
 			SanitizeAccents:            true,
-			MatchWholeWord:             false,
 			ConfidenceCalculator:       confidenceCalculator,
 			CensorCharacter:            '*',
 		},
@@ -125,15 +124,6 @@ func (d *ProfanityDetector) WithSanitizeWildcardCharacters(sanitize bool) *Profa
 // by real characters (for example, &gt; will be replaced with '>').
 func (d *ProfanityDetector) WithProcessInputAsHTML(asHTML bool) *ProfanityDetector {
 	d.settings.ProcessInputAsHTML = asHTML
-	return d
-}
-
-// WithMatchWholeWord allows configuring of whether the detection process should match
-// the whole word.
-//
-// For instance, "xass" will be considered not profane.
-func (d *ProfanityDetector) WithMatchWholeWord(matchWholeWord bool) *ProfanityDetector {
-	d.settings.MatchWholeWord = matchWholeWord
 	return d
 }
 

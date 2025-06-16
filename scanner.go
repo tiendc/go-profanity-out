@@ -28,16 +28,21 @@ func (s *scanner) scan(input string) (matches Matches) {
 
 	s.inputLen = len(s.input)
 	match := Match{} // declares a match here to reduce the allocations
+	hasHeadingWildcard := s.settings.SanitizeWildcardCharacters && s.tree.hasHeadingWildcard
+	var prevCh rune
 	pos := 0
 	for pos < s.inputLen {
-		nextPos := s.skipWhitespaces(pos)
-		if nextPos >= s.inputLen {
+		ch, nextPos := s.nextCharAt(pos)
+		if ch == 0 {
 			break
 		}
-		hasLeadingSpace := pos == 0 || nextPos != pos
-		pos = nextPos
+		if ch == ' ' {
+			prevCh = ch
+			pos = nextPos
+			continue
+		}
 
-		match = Match{Start: pos, LeadingSpace: hasLeadingSpace, Settings: s.settings}
+		match = Match{Start: pos, HeadSpace: prevCh == 0 || s.isWhitespace(prevCh), Settings: s.settings}
 		s.scanOne(pos, 0, s.tree.root, &match)
 		if match.WordType != 0 {
 			if !s.settings.ConfidenceCalculator(&match) {
@@ -48,20 +53,22 @@ func (s *scanner) scan(input string) (matches Matches) {
 			if match.WordType == WordTypeProfanity && !s.settings.findAllProfanityMatches {
 				return matches
 			}
+			prevCh = ch
 			pos = match.End
 			continue
 		}
 
 	ScanNextPos:
-		// No match found
-		if s.settings.MatchWholeWord {
-			nextPos = s.skipUntilWhitespace(pos)
-			if nextPos != pos {
-				pos = nextPos
-				continue
-			}
+		prevCh = ch
+		if hasHeadingWildcard {
+			pos = nextPos
+			continue
 		}
-		pos++
+		if next := s.skipUntilWhitespace(pos); next != pos {
+			pos = next
+			continue
+		}
+		pos = nextPos
 	}
 
 	return matches
@@ -172,6 +179,18 @@ func (s *scanner) scanOne(pos int, prevCh rune, currentNode *node, match *Match)
 	// fmt.Printf("Match Data: type=%d word='%s'\n", match.WordType, match.Word)
 }
 
+func (s *scanner) isWhitespace(ch rune) bool {
+	if ch == ' ' {
+		return true
+	}
+	if s.settings.SanitizeSpecialCharacters {
+		if ch = s.specialCharacters[ch]; ch == ' ' {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *scanner) isWhitespaceAt(i int) bool {
 	if i < 0 {
 		return true
@@ -194,33 +213,6 @@ func (s *scanner) isCharRepeatedAt(i int, prevCh rune) bool {
 	}
 	ch, _ := s.nextCharAt(i)
 	return unicode.ToLower(ch) == prevCh
-}
-
-func (s *scanner) skipWhitespaces(i int) int {
-	for {
-		ch, next := s.nextCharAt(i)
-		if ch == 0 {
-			return next
-		}
-		if ch == ' ' {
-			i = next
-			continue
-		}
-		if s.settings.SanitizeLeetSpeak {
-			if ch2 := s.leetSpeakCharacters[ch]; ch2 != 0 && ch2 != ' ' {
-				return i // found a non-whitespace
-			}
-		}
-		if s.settings.SanitizeSpecialCharacters {
-			if ch2 := s.specialCharacters[ch]; ch2 != 0 {
-				ch = ch2
-			}
-		}
-		if ch != ' ' {
-			return i
-		}
-		i = next
-	}
 }
 
 func (s *scanner) skipUntilWhitespace(i int) int {
@@ -276,14 +268,17 @@ func (s *scanner) updateMatchWithFoundNode(match *Match, end int, node *node) {
 	if match.WordType > node.wordType {
 		return
 	}
-	trailingSpace := s.isWhitespaceAt(end)
-	if s.settings.MatchWholeWord && (!match.LeadingSpace || !trailingSpace) {
+	if !match.HeadSpace && node.requireHeadSpace {
+		return
+	}
+	tailSpace := s.isWhitespaceAt(end)
+	if !tailSpace && node.requireTailSpace {
 		return
 	}
 
 	match.End = end
 	match.WordType = node.wordType
 	match.Word = node.word
-	match.TrailingSpace = trailingSpace
+	match.TailSpace = tailSpace
 	match.Text = s.inputOrig[match.Start:match.End]
 }

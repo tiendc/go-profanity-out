@@ -1,14 +1,14 @@
 package profanityout
 
 type Match struct {
-	Word          string
-	WordType      WordType
-	Start         int
-	End           int
-	LeadingSpace  bool
-	TrailingSpace bool
-	Text          []rune
-	Settings      *DetectorSettings
+	Word      string
+	WordType  WordType
+	Start     int
+	End       int
+	HeadSpace bool
+	TailSpace bool
+	Text      []rune
+	Settings  *DetectorSettings
 }
 
 type WordType int8

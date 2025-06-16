@@ -27,9 +27,6 @@ func Test_Settings(t *testing.T) {
 	WithProcessInputAsHTML(true)(s)
 	assert.Equal(t, true, s.ProcessInputAsHTML)
 
-	WithMatchWholeWord(true)(s)
-	assert.Equal(t, true, s.MatchWholeWord)
-
 	WithCensorCharacter('%')(s)
 	assert.Equal(t, '%', s.CensorCharacter)
 }
