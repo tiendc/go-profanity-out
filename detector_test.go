@@ -14,9 +14,8 @@ const (
 	sanitizeSpecialCharacters  = true
 	sanitizeSpaces             = true
 	sanitizeRepeatedCharacters = true
-	sanitizeWildcardCharacters = false
+	sanitizeWildcardCharacters = true
 	processInputAsHTML         = false
-	matchWholeWord             = true
 )
 
 func newDetectorEN() *ProfanityDetector {
@@ -33,19 +32,18 @@ func newDetectorEN() *ProfanityDetector {
 		WithSanitizeAccents(sanitizeAccents).
 		WithSanitizeRepeatedCharacters(sanitizeRepeatedCharacters).
 		WithSanitizeWildcardCharacters(sanitizeWildcardCharacters).
-		WithProcessInputAsHTML(processInputAsHTML).
-		WithMatchWholeWord(matchWholeWord)
+		WithProcessInputAsHTML(processInputAsHTML)
 }
 
 func toCmp(m *Match) *Match {
 	return &Match{
-		Word:          m.Word,
-		WordType:      m.WordType,
-		Start:         m.Start,
-		End:           m.End,
-		LeadingSpace:  m.LeadingSpace,
-		TrailingSpace: m.TrailingSpace,
-		Text:          m.Text,
+		Word:      m.Word,
+		WordType:  m.WordType,
+		Start:     m.Start,
+		End:       m.End,
+		HeadSpace: m.HeadSpace,
+		TailSpace: m.TailSpace,
+		Text:      m.Text,
 	}
 }
 
@@ -54,32 +52,32 @@ func Test_Scan_One(t *testing.T) {
 	var m []*Match
 
 	t.Run("Match whole word tests", func(t *testing.T) {
-		m = d().WithMatchWholeWord(false).ScanProfanity("xASs")
-		assert.Equal(t, &Match{Word: "ass", Start: 1, End: 4, WordType: WordTypeProfanity,
-			Text: []rune("ASs"), LeadingSpace: false, TrailingSpace: true}, toCmp(m[0]))
-
-		m = d().WithMatchWholeWord(true).ScanProfanity("x aSs")
+		m = d().ScanProfanity("x ASs-x")
 		assert.Equal(t, &Match{Word: "ass", Start: 2, End: 5, WordType: WordTypeProfanity,
-			Text: []rune("aSs"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("ASs"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
-		m = d().WithMatchWholeWord(true).ScanProfanity("xAss")
+		m = d().ScanProfanity("x aSs")
+		assert.Equal(t, &Match{Word: "ass", Start: 2, End: 5, WordType: WordTypeProfanity,
+			Text: []rune("aSs"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
+
+		m = d().ScanProfanity("xAss")
 		assert.Nil(t, m)
 	})
 
 	t.Run("Sanitize leet speak tests", func(t *testing.T) {
 		m = d().WithSanitizeLeetSpeak(true).ScanProfanity("x a$$hol3 ")
 		assert.Equal(t, &Match{Word: "asshole", Start: 2, End: 9, WordType: WordTypeProfanity,
-			Text: []rune("a$$hol3"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("a$$hol3"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
-		m = d().WithSanitizeLeetSpeak(true).WithMatchWholeWord(false).ScanProfanity("x$sh!tx")
-		assert.Equal(t, &Match{Word: "shit", Start: 1, End: 6, WordType: WordTypeProfanity,
-			Text: []rune("$sh!t"), LeadingSpace: false, TrailingSpace: false}, toCmp(m[0]))
+		m = d().WithSanitizeLeetSpeak(true).ScanProfanity("x_$sh!t_x")
+		assert.Equal(t, &Match{Word: "shit", Start: 2, End: 7, WordType: WordTypeProfanity,
+			Text: []rune("$sh!t"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 	})
 
 	t.Run("Sanitize space char tests", func(t *testing.T) {
 		m = d().WithSanitizeSpaces(true).ScanProfanity("x A S s")
 		assert.Equal(t, &Match{Word: "ass", Start: 2, End: 7, WordType: WordTypeProfanity,
-			Text: []rune("A S s"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("A S s"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
 		m = d().WithSanitizeSpaces(false).ScanProfanity("x A ss")
 		assert.Nil(t, m)
@@ -88,11 +86,11 @@ func Test_Scan_One(t *testing.T) {
 	t.Run("Sanitize special char tests", func(t *testing.T) {
 		m = d().WithSanitizeSpecialCharacters(true).ScanProfanity("x-f$u_c%k")
 		assert.Equal(t, &Match{Word: "fuck", Start: 2, End: 9, WordType: WordTypeProfanity,
-			Text: []rune("f$u_c%k"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("f$u_c%k"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
 		m = d().WithSanitizeSpecialCharacters(true).ScanProfanity("x_f$u_c%k-")
 		assert.Equal(t, &Match{Word: "fuck", Start: 2, End: 9, WordType: WordTypeProfanity,
-			Text: []rune("f$u_c%k"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("f$u_c%k"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
 		m = d().WithSanitizeSpecialCharacters(false).ScanProfanity("x-f$u_c%k")
 		assert.Nil(t, m)
@@ -101,7 +99,7 @@ func Test_Scan_One(t *testing.T) {
 	t.Run("Sanitize repeated char tests", func(t *testing.T) {
 		m = d().WithSanitizeRepeatedCharacters(true).ScanProfanity("x-fuu_cck")
 		assert.Equal(t, &Match{Word: "fuck", Start: 2, End: 9, WordType: WordTypeProfanity,
-			Text: []rune("fuu_cck"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("fuu_cck"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
 		m = d().WithSanitizeRepeatedCharacters(false).ScanProfanity("x-fuu_cck")
 		assert.Nil(t, m)
@@ -111,7 +109,7 @@ func Test_Scan_One(t *testing.T) {
 		// Wildcard in input
 		m = d().WithSanitizeWildcardCharacters(true).ScanProfanity("x sh**t")
 		assert.Equal(t, &Match{Word: "shit", Start: 2, End: 7, WordType: WordTypeProfanity,
-			Text: []rune("sh**t"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("sh**t"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
 		m = d().WithSanitizeWildcardCharacters(false).ScanProfanity("x sh**t")
 		assert.Nil(t, m)
@@ -119,14 +117,29 @@ func Test_Scan_One(t *testing.T) {
 		// Wildcard in profanity dictionary
 		m = d().WithProfaneWords([]string{"*blah*"}).WithSanitizeWildcardCharacters(true).
 			ScanProfanity("xbl@hx")
-		assert.Equal(t, &Match{Word: "*blah*", Start: 0, End: 6, WordType: WordTypeProfanity,
-			Text: []rune("xbl@hx"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+		assert.Equal(t, &Match{Word: "blah", Start: 1, End: 5, WordType: WordTypeProfanity,
+			Text: []rune("bl@h"), HeadSpace: false, TailSpace: false}, toCmp(m[0]))
+
+		m = d().WithProfaneWords([]string{"*blah*"}).WithSanitizeWildcardCharacters(true).
+			ScanProfanity("xxbl@h")
+		assert.Equal(t, &Match{Word: "blah", Start: 2, End: 6, WordType: WordTypeProfanity,
+			Text: []rune("bl@h"), HeadSpace: false, TailSpace: true}, toCmp(m[0]))
+
+		m = d().WithProfaneWords([]string{"*blah*"}).WithSanitizeWildcardCharacters(true).
+			ScanProfanity(" bl@h")
+		assert.Equal(t, &Match{Word: "blah", Start: 1, End: 5, WordType: WordTypeProfanity,
+			Text: []rune("bl@h"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
+
+		m = d().WithProfaneWords([]string{"foo*bar"}).WithSanitizeWildcardCharacters(true).
+			ScanProfanity("foobar")
+		assert.Equal(t, &Match{Word: "foobar", Start: 0, End: 6, WordType: WordTypeProfanity,
+			Text: []rune("foobar"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 	})
 
 	t.Run("Process input as HTML tests", func(t *testing.T) {
 		m = d().WithProcessInputAsHTML(true).ScanProfanity("x <a tag> &lt;ock </> ")
 		assert.Equal(t, &Match{Word: "cock", Start: 10, End: 17, WordType: WordTypeProfanity,
-			Text: []rune("&lt;ock"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("&lt;ock"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
 		m = d().WithProcessInputAsHTML(false).ScanProfanity("x &lt;ock </> ")
 		assert.Nil(t, m)
@@ -135,38 +148,38 @@ func Test_Scan_One(t *testing.T) {
 	t.Run("Sanitize accents tests", func(t *testing.T) {
 		m = d().WithSanitizeAccents(true).ScanProfanity("aa fúck")
 		assert.Equal(t, &Match{Word: "fuck", Start: 3, End: 7, WordType: WordTypeProfanity,
-			Text: []rune("fúck"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("fúck"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
 		m = d().WithSanitizeAccents(false).ScanProfanity("aa fúck")
 		assert.Nil(t, m)
 	})
 
 	t.Run("False positive tests", func(t *testing.T) {
-		m = d().WithMatchWholeWord(false).ScanProfanity("x bada$$ ")
+		m = d().ScanProfanity("x bada$$ ")
 		assert.Equal(t, &Match{Word: "badass", Start: 2, End: 8, WordType: WordTypeFalsePositive,
-			Text: []rune("bada$$"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("bada$$"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
-		m = d().WithMatchWholeWord(true).ScanProfanity("x bada$$ ana7")
+		m = d().ScanProfanity("x bada$$ ana7")
 		assert.Equal(t, &Match{Word: "badass", Start: 2, End: 8, WordType: WordTypeFalsePositive,
-			Text: []rune("bada$$"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("bada$$"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 		assert.Equal(t, &Match{Word: "anal", Start: 9, End: 13, WordType: WordTypeProfanity,
-			Text: []rune("ana7"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[1]))
+			Text: []rune("ana7"), HeadSpace: true, TailSpace: true}, toCmp(m[1]))
 
-		m = d().WithMatchWholeWord(false).ScanProfanity("x aNalytic ")
+		m = d().ScanProfanity("x aNalytic ")
 		assert.Equal(t, &Match{Word: "analytic", Start: 2, End: 10, WordType: WordTypeFalsePositive,
-			Text: []rune("aNalytic"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("aNalytic"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 
-		m = d().WithMatchWholeWord(true).ScanProfanity("x analytic ")
+		m = d().ScanProfanity("x analytic ")
 		assert.Equal(t, &Match{Word: "analytic", Start: 2, End: 10, WordType: WordTypeFalsePositive,
-			Text: []rune("analytic"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("analytic"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 	})
 
 	t.Run("Suspect word tests", func(t *testing.T) {
 		m = d().WithSuspectWords([]string{"suspect"}).ScanProfanity("suspect sh!t")
 		assert.Equal(t, &Match{Word: "suspect", Start: 0, End: 7, WordType: WordTypeSuspect,
-			Text: []rune("suspect"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[0]))
+			Text: []rune("suspect"), HeadSpace: true, TailSpace: true}, toCmp(m[0]))
 		assert.Equal(t, &Match{Word: "shit", Start: 8, End: 12, WordType: WordTypeProfanity,
-			Text: []rune("sh!t"), LeadingSpace: true, TrailingSpace: true}, toCmp(m[1]))
+			Text: []rune("sh!t"), HeadSpace: true, TailSpace: true}, toCmp(m[1]))
 	})
 
 	t.Run("Custom confidence calculator tests", func(t *testing.T) {
@@ -206,7 +219,6 @@ func Test_IsProfane(t *testing.T) {
 
 	assert.Equal(t, true, d().IsProfane("x ass"))
 	assert.Equal(t, false, d().IsProfane("xass"))
-	assert.Equal(t, true, d().IsProfane("xass", WithMatchWholeWord(false)))
 }
 
 func Test_General(t *testing.T) {

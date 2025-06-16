@@ -8,7 +8,6 @@ type DetectorSettings struct {
 	SanitizeRepeatedCharacters bool
 	SanitizeWildcardCharacters bool
 	ProcessInputAsHTML         bool
-	MatchWholeWord             bool
 
 	ConfidenceCalculator ConfidenceCalculator
 	CensorCharacter      rune
@@ -53,12 +52,6 @@ func WithSanitizeWildcardCharacters(flag bool) DetectorOption {
 func WithProcessInputAsHTML(flag bool) DetectorOption {
 	return func(settings *DetectorSettings) {
 		settings.ProcessInputAsHTML = flag
-	}
-}
-
-func WithMatchWholeWord(flag bool) DetectorOption {
-	return func(settings *DetectorSettings) {
-		settings.MatchWholeWord = flag
 	}
 }
 
