@@ -42,7 +42,7 @@ func (tree *tree) Add(word string, wordType WordType) {
 
 	for _, w := range buildWordListHandleWildcard(word) {
 		if w != word {
-			tree.add(w, wordType, true, true)
+			tree.add(w, wordType, requireHeadSpace, requireTailSpace)
 		}
 	}
 }
