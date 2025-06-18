@@ -150,7 +150,7 @@ func (d *ProfanityDetector) ScanProfanity(s string, options ...DetectorOption) M
 }
 
 // ScanAllProfanities scans for all profanities
-func (d *ProfanityDetector) ScanAllProfanities(s string, options ...DetectorOption) (matches Matches) {
+func (d *ProfanityDetector) ScanAllProfanities(s string, options ...DetectorOption) Matches {
 	return d.newScanner(true, options...).scan(s)
 }
 

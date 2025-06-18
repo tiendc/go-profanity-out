@@ -8,11 +8,47 @@ type tree struct {
 }
 
 type node struct {
-	children         map[rune]*node
-	word             string
-	wordType         WordType
-	requireHeadSpace bool
-	requireTailSpace bool
+	children map[rune]*node
+	word     *wordData
+}
+
+type wordData struct {
+	word     string
+	wordType WordType
+	wordFlag WordFlag
+}
+
+type WordFlag uint8
+
+const (
+	wordFlagRequireHeadSpace WordFlag = 1
+	wordFlagRequireTailSpace WordFlag = 2
+
+	wordFlagDefault WordFlag = wordFlagRequireHeadSpace | wordFlagRequireTailSpace
+)
+
+func (flag WordFlag) RequireHeadSpace() bool {
+	return flag&wordFlagRequireHeadSpace != 0
+}
+
+func (flag *WordFlag) SetRequireHeadSpace(val bool) {
+	if val {
+		*flag |= wordFlagRequireHeadSpace
+	} else {
+		*flag &= ^wordFlagRequireHeadSpace
+	}
+}
+
+func (flag WordFlag) RequireTailSpace() bool {
+	return flag&wordFlagRequireTailSpace != 0
+}
+
+func (flag *WordFlag) SetRequireTailSpace(val bool) {
+	if val {
+		*flag |= wordFlagRequireTailSpace
+	} else {
+		*flag &= ^wordFlagRequireTailSpace
+	}
 }
 
 func (node *node) Next(next rune) *node {
@@ -27,27 +63,24 @@ func newTree() *tree {
 }
 
 func (tree *tree) Add(word string, wordType WordType) {
-	requireHeadSpace := true
-	requireTailSpace := true
+	word = normalizeAsNFC(word)
+	wordFlag := wordFlagDefault
 	for strings.HasPrefix(word, "*") {
 		word = strings.TrimPrefix(word, "*")
-		requireHeadSpace = false
+		wordFlag.SetRequireHeadSpace(false)
 		tree.hasHeadingWildcard = true
 	}
 	for strings.HasSuffix(word, "*") {
 		word = strings.TrimSuffix(word, "*")
-		requireTailSpace = false
+		wordFlag.SetRequireTailSpace(false)
 	}
-	tree.add(word, wordType, requireHeadSpace, requireTailSpace)
 
 	for _, w := range buildWordListHandleWildcard(word) {
-		if w != word {
-			tree.add(w, wordType, requireHeadSpace, requireTailSpace)
-		}
+		tree.add(w, wordType, wordFlag)
 	}
 }
 
-func (tree *tree) add(word string, wordType WordType, requireHeadSpace, requireTailSpace bool) {
+func (tree *tree) add(word string, wordType WordType, flag WordFlag) {
 	if len(word) == 0 {
 		return
 	}
@@ -55,7 +88,7 @@ func (tree *tree) add(word string, wordType WordType, requireHeadSpace, requireT
 	for _, ch := range word {
 		next := current.Next(ch)
 		if next == nil {
-			next = &node{requireHeadSpace: true, requireTailSpace: true}
+			next = &node{}
 		}
 		if current.children == nil {
 			current.children = make(map[rune]*node)
@@ -63,16 +96,14 @@ func (tree *tree) add(word string, wordType WordType, requireHeadSpace, requireT
 		current.children[ch] = next
 		current = next
 	}
-	current.word = word
-	if current.requireHeadSpace {
-		current.requireHeadSpace = requireHeadSpace
+	if current.word == nil {
+		current.word = &wordData{wordFlag: wordFlagDefault}
 	}
-	if current.requireTailSpace {
-		current.requireTailSpace = requireTailSpace
+	current.word.word = word
+	if current.word.wordType < wordType {
+		current.word.wordType = wordType
 	}
-	if current.wordType < wordType {
-		current.wordType = wordType
-	}
+	current.word.wordFlag = flag
 }
 
 // buildWordListHandleWildcard if input contains wildcard "*", this returns all combinations

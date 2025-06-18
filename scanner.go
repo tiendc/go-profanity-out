@@ -108,7 +108,7 @@ func (s *scanner) scanOne(pos int, prevCh rune, currentNode *node, match *Match)
 			if s.settings.SanitizeLeetSpeak {
 				if lsCh, exists := s.leetSpeakCharacters[ch]; exists {
 					if lsNode := currentNode.Next(lsCh); lsNode != nil {
-						if lsNode.wordType != 0 { // match found at the current node
+						if lsNode.word != nil { // match found at the current node
 							s.updateMatchWithFoundNode(match, nextPos, lsNode)
 						}
 						s.scanOne(nextPos, lsCh, lsNode, match)  // scan deeper
@@ -157,7 +157,7 @@ func (s *scanner) scanOne(pos int, prevCh rune, currentNode *node, match *Match)
 		currentNode = nextNode
 
 		// If there is a matching detected
-		if currentNode.wordType != 0 {
+		if currentNode.word != nil {
 			s.updateMatchWithFoundNode(match, nextPos, currentNode)
 		}
 	}
@@ -165,7 +165,7 @@ func (s *scanner) scanOne(pos int, prevCh rune, currentNode *node, match *Match)
 	// After all scans and no matching found, we may start a new scan for wildcard matching
 	if match.WordType == 0 && wildcardPos >= 0 {
 		for currCh, currNode := range wildcardNode.children {
-			if currNode.wordType != 0 { // match found at the current node
+			if currNode.word != nil { // match found at the current node
 				s.updateMatchWithFoundNode(match, wildcardPos+1, currNode)
 			}
 			s.scanOne(wildcardPos+1, currCh, currNode, match) // scan deeper
@@ -265,20 +265,20 @@ func (s *scanner) nextCharAt(i int) (rune, int) {
 func (s *scanner) updateMatchWithFoundNode(match *Match, end int, node *node) {
 	// Only update the match if the target is at equal or higher level.
 	// For example, current is `profanity` and the target is `suspect`, just ignore.
-	if match.WordType > node.wordType {
+	if match.WordType > node.word.wordType {
 		return
 	}
-	if !match.HeadSpace && node.requireHeadSpace {
+	if !match.HeadSpace && node.word.wordFlag.RequireHeadSpace() {
 		return
 	}
 	tailSpace := s.isWhitespaceAt(end)
-	if !tailSpace && node.requireTailSpace {
+	if !tailSpace && node.word.wordFlag.RequireTailSpace() {
 		return
 	}
 
 	match.End = end
-	match.WordType = node.wordType
-	match.Word = node.word
+	match.WordType = node.word.wordType
+	match.Word = node.word.word
 	match.TailSpace = tailSpace
 	match.Text = s.inputOrig[match.Start:match.End]
 }
