@@ -5,7 +5,8 @@ type ProfanityDetector struct {
 	specialCharacters   map[rune]rune
 	leetSpeakCharacters map[rune]rune
 	wildcardCharacters  map[rune]rune
-	tree                *tree
+	profanityTree       *tree
+	falsePositiveTree   *tree
 }
 
 func NewProfanityDetector() *ProfanityDetector {
@@ -20,14 +21,15 @@ func NewProfanityDetector() *ProfanityDetector {
 			ConfidenceCalculator:       confidenceCalculator,
 			CensorCharacter:            '*',
 		},
-		tree: newTree(),
+		profanityTree:     newTree(),
+		falsePositiveTree: newTree(),
 	}
 }
 
 // WithProfaneWords sets profane words
 func (d *ProfanityDetector) WithProfaneWords(profaneWords []string) *ProfanityDetector {
 	for _, word := range profaneWords {
-		d.tree.Add(word, WordTypeProfanity)
+		d.profanityTree.Add(word, WordTypeProfanity)
 	}
 	return d
 }
@@ -35,7 +37,7 @@ func (d *ProfanityDetector) WithProfaneWords(profaneWords []string) *ProfanityDe
 // WithSuspectWords sets suspect words
 func (d *ProfanityDetector) WithSuspectWords(suspectWords []string) *ProfanityDetector {
 	for _, word := range suspectWords {
-		d.tree.Add(word, WordTypeSuspect)
+		d.profanityTree.Add(word, WordTypeSuspect)
 	}
 	return d
 }
@@ -43,7 +45,7 @@ func (d *ProfanityDetector) WithSuspectWords(suspectWords []string) *ProfanityDe
 // WithFalsePositiveWords sets false positive words
 func (d *ProfanityDetector) WithFalsePositiveWords(falsePositives []string) *ProfanityDetector {
 	for _, word := range falsePositives {
-		d.tree.Add(word, WordTypeFalsePositive)
+		d.falsePositiveTree.Add(word, WordTypeFalsePositive)
 	}
 	return d
 }
@@ -184,7 +186,8 @@ func (d *ProfanityDetector) newScanner(findAllMatches bool, options ...DetectorO
 		specialCharacters:   d.specialCharacters,
 		leetSpeakCharacters: d.leetSpeakCharacters,
 		wildcardCharacters:  d.wildcardCharacters,
-		tree:                d.tree,
+		profanityTree:       d.profanityTree,
+		falsePositiveTree:   d.falsePositiveTree,
 	}
 }
 
