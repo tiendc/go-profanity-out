@@ -9,6 +9,9 @@ type Match struct {
 	TailSpace bool
 	Text      []rune
 	Settings  *DetectorSettings
+
+	// private fields
+	foundRealCharMatch bool
 }
 
 type WordType int8
